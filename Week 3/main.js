@@ -3,10 +3,10 @@ Complete the following table when you submit this file:
 
 Surname     | Firstname | email | Contribution% | Any issues?
 =============================================================
-Person 1... |           |       | 25%           |
-Person 2... |           |       | 25%           |
-Person 3... |           |       | 25%           |
-Person 4... |           |       | 25%           |
+Person 1... | Robert    | rdav0020@mckinnonsc.vic.edu.au | 25%           |
+Person 2... | Tina      | tjia0024@student.monash.edu    | 25%           |
+Major       | Damien    | dmaj0002@student.monash.edu    | 25%           |
+Fons        | Mae       | jpes0001@student.monash.edu    | 25%           |
 
 complete Worksheet 3 by entering code in the places marked below...
 
@@ -78,17 +78,63 @@ function forEach(f, list) {
     }
 }
 function map(f, l) {
-    return null; // ???
+    return l ? cons(f(head(l)), map(f, rest(l))) : null;
 }
 //
 // Exercise 3: 
 // 
+function fromArray(arr) {
+    return arr.length > 0 ? cons(arr[0], fromArray(arr.slice(1)))
+        : null;
+}
+function filter(f, l) {
+    if (l === null) {
+        return null;
+    }
+    return f(head(l)) ? cons(head(l), filter(f, rest(l)))
+        : (rest(l) ? filter(f, rest(l)) : null);
+}
+function reduce(f, initialValue, inputArray) {
+    if (rest(inputArray) == null) {
+        return head(inputArray);
+    }
+    if (rest(rest(inputArray)) === null) {
+        return f(head(inputArray), head(rest(inputArray)));
+    }
+    else {
+        if (initialValue !== null) {
+            inputArray = cons(f(initialValue, head(inputArray)), rest(inputArray));
+        }
+        else {
+            inputArray = cons(f(head(inputArray), head(rest(inputArray))), rest(rest(inputArray)));
+        }
+        return reduce(f, null, inputArray);
+    }
+}
 // example use of reduce:
 function countLetters(stringArray) {
     const list = fromArray(stringArray);
     return reduce((len, s) => len + s.length, 0, list);
 }
-console.log(countLetters(["Hello", "there!"]));
+//console.log(countLetters(["Hello","there!"]));
+function reduceRight(f, n, inputArray) {
+    return f(reduce(f, null, reverse(inputArray)), n);
+}
+function concat(list1, list2) {
+    return list1 ? cons(head(list1), concat(rest(list1), list2))
+        : (list2 ? concat(list2) : null);
+}
+function reverse(list) {
+    if (list === null) {
+        return null;
+    }
+    else if (rest(list) !== null) {
+        return concat(reverse(rest(list)), cons(head(list), null));
+    }
+    else {
+        return list;
+    }
+}
 //
 // Exercise 4:
 // 
@@ -98,7 +144,7 @@ console.log(countLetters(["Hello", "there!"]));
 class List {
     constructor(list) {
         if (list instanceof Array) {
-            // what goes here?
+            this.head = fromArray(list);
         }
         else {
             this.head = (list === undefined) ? null : list;
@@ -107,12 +153,40 @@ class List {
     /**
      * create an array containing all the elements of this List
      */
-    toArray() {
-        // Getting type errors here?
-        // Make sure your type annotation for reduce()
-        // in Exercise 3 is correct!
-        return reduce((a, t) => [...a, t], [], this.head);
+    //toArray(): T[] {
+    // Getting type errors here?
+    // Make sure your type annotation for reduce()
+    // in Exercise 3 is correct!    
+    //    return reduce((a, t) => [...a, t], <T[]>[], this.head);
+    //}
+    toArray(l = this.head) {
+        return l ? [head(l), ...this.toArray(rest(l))] : [];
     }
+    forEach(f) {
+        forEach(f, this.head);
+        return this;
+    }
+    filter(f) {
+        return new List(filter(f, this.head));
+    }
+    map(f) {
+        return new List(map(f, this.head));
+    }
+    reduce(f, initialValue) {
+        return reduce(f, initialValue, this.head);
+    }
+    concat(other) {
+        return new List(concat(this.head, other.head));
+    }
+}
+/**
+ * Exercise 5:
+ */
+function line(newLine) {
+    return [0, newLine];
+}
+function lineToList(line) {
+    return new List([line]);
 }
 class BinaryTreeNode {
     constructor(data, leftChild, rightChild) {
@@ -123,20 +197,21 @@ class BinaryTreeNode {
 }
 // example tree:
 const myTree = new BinaryTreeNode(1, new BinaryTreeNode(2, new BinaryTreeNode(3)), new BinaryTreeNode(4));
+function nest(indent, layout) {
+    return layout.map((x) => [x[0] + indent, x[1]]);
+}
 // *** uncomment the following code once you have implemented List and nest function (above) ***
-// function prettyPrintBinaryTree<T>(node: BinaryTree<T>): List<[number, string]> {
-//     if (!node) {
-//         return new List<[number, string]>([])
-//     }
-//     const thisLine = lineToList(line(node.data.toString())),
-//           leftLines = prettyPrintBinaryTree(node.leftChild),
-//           rightLines = prettyPrintBinaryTree(node.rightChild);
-//     return thisLine.concat(nest(1, leftLines.concat(rightLines)))
-// }
-// const output = prettyPrintBinaryTree(myTree)
-//                     .map(aLine => new Array(aLine[0] + 1).join('-') + aLine[1])
-//                     .reduce((a,b) => a + '\n' + b, '').trim();
-// console.log(output);
+function prettyPrintBinaryTree(node) {
+    if (!node) {
+        return new List([]);
+    }
+    const thisLine = lineToList(line(node.data.toString())), leftLines = prettyPrintBinaryTree(node.leftChild), rightLines = prettyPrintBinaryTree(node.rightChild);
+    return thisLine.concat(nest(1, leftLines.concat(rightLines)));
+}
+const output = prettyPrintBinaryTree(myTree)
+    .map(aLine => new Array(aLine[0] + 1).join('-') + aLine[1])
+    .reduce((a, b) => a + '\n' + b, '').trim();
+//console.log(output);
 /**
  * Exercise 7:
  *  implement prettyPrintNaryTree, which takes a NaryTree as input
@@ -158,55 +233,100 @@ let naryTree = new NaryTree(1, new List([
 ]));
 // implement: function prettyPrintNaryTree(...)
 function prettyPrintNaryTree(node) {
-    return undefined;
+    const thisLine = lineToList(line(node.data.toString()));
+    if (!node) {
+        return new List([]);
+    }
+    if (node.children.head !== null) {
+        if (rest(node.children.head) !== null) {
+            return thisLine.concat(nest(1, node.children.reduce((x, y) => {
+                if (x instanceof NaryTree && y instanceof NaryTree) {
+                    return prettyPrintNaryTree(x).concat(prettyPrintNaryTree(y));
+                }
+                else if (x instanceof NaryTree) {
+                    return y.concat(prettyPrintNaryTree(x));
+                }
+                else if (y instanceof NaryTree) {
+                    return x.concat(prettyPrintNaryTree(y));
+                }
+            }, null)));
+        }
+        else {
+            return thisLine.concat(nest(1, prettyPrintNaryTree(head(node.children.head))));
+        }
+    }
+    else {
+        return thisLine;
+    }
 }
+// *** uncomment the following code once you have implemented prettyPrintNaryTree (above) ***
+const outputNaryTree = prettyPrintNaryTree(naryTree)
+    .map(aLine => new Array(aLine[0] + 1).join('-') + aLine[1])
+    .reduce((a, b) => a + '\n' + b, '').trim();
+console.log(outputNaryTree);
 const jsonPrettyToDoc = json => {
-    if (Array.isArray(json)) {
-        // Handle the Array case.
+    if (Array.isArray(json)) { //I think the type should be jsonTypes. It can be returned by the function and allows both string a
+        // Handle the Array case. 
+        let arrayJson = new List(json);
+        arrayJson = arrayJson.map(elm => { return jsonPrettyToDoc(elm); });
+        //json.forEach(elm =>arrayJson.concat(new List<[number, string]>([[0, "bruh"]]))); // new List<[number, string]>([[0,"buh"]]))) // (jsonPrettyToDoc(elm).map(lineIndented).reduce(appendLine, '').trim());
+        return arrayJson;
     }
     else if (typeof json === 'object' && json !== null) {
         // Handle the object case.
         // Hint: use Object.keys(json) to get a list of
         // keys that the object has.
+        Object.keys(json).forEach(elm => jsonPrettyToDoc(elm).map(lineIndented).reduce(appendLine, '').trim());
     }
     else if (typeof json === 'string') {
         // Handle string case.
+        return new List([[0, json]]);
     }
     else if (typeof json === 'number') {
         // Handle number
+        return new List([[0, json.toString()]]);
     }
     else if (typeof json === 'boolean') {
-        // Handle the boolean case
+        if (json) {
+            return new List([[0, "true"]]);
+        }
+        else {
+            return new List([[0, "false"]]);
+        }
+        //   return new List([0, json ? "true" : "false"]);  
     }
     else if (json === null) {
         // Handle the null case
+        // "null" ???
+        return new List([[0, "null"]]);
     }
     // Default case to fall back on.
     return new List([]);
 };
 // *** uncomment the following code once you are ready to test your implemented jsonPrettyToDoc ***
-// const json = {
-//     unit: "FIT2102",
-//     year: 2021,
-//     semester: "S2",
-//     active: true,
-//     assessments: {"week1": null as null, "week2": "Tutorial 1 Exercise", "week3": "Tutorial 2 Exercise"},
-//     languages: ["Javascript", "Typescript", "Haskell", "Minizinc"]
-// }
-//
-// function lineIndented(aLine: [number, string]): string {
-//     return new Array(aLine[0] + 1).join('    ') + aLine[1];
-// }
-//
-// function appendLine(acc: string, nextLine: string): string {
-//     return nextLine.slice(-1) === "," ? acc + nextLine.trim() :
-//            acc.slice(-1) === ":"      ? acc + " " + nextLine.trim() :
-//            acc + '\n' + nextLine;
-// }
-//
-// console.log(jsonPrettyToDoc(json)
-//               .map(lineIndented)
-//               .reduce(appendLine, '').trim());
+const json = {
+    unit: "FIT2102",
+    year: 2021,
+    semester: "S2",
+    active: true,
+    assessments: { "week1": null, "week2": "Tutorial 1 Exercise", "week3": "Tutorial 2 Exercise" },
+    languages: ["Javascript", "Typescript", "Haskell", "Minizinc"]
+};
+const testJason = ["1", "2", "3d"];
+console.log("Test result gives " + jsonPrettyToDoc(testJason).map(lineIndented).reduce(appendLine, '').trim());
+_;
+function lineIndented(aLine) {
+    return new Array(aLine[0] + 1).join('    ') + aLine[1];
+}
+function appendLine(acc, nextLine) {
+    return nextLine.slice(-1) === "," ? acc + nextLine.trim() :
+        acc.slice(-1) === ":" ? acc + " " + nextLine.trim() :
+            acc + '\n' + nextLine;
+}
+console.log("Print should be below");
+console.log(jsonPrettyToDoc(json)
+    .map(lineIndented)
+    .reduce(appendLine, '').trim());
 // *** This is what it should look like in the console ***
 // 
 // {
